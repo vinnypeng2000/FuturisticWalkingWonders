@@ -1,19 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 5f;
-    public float mouseSensitivity = 2f;
+    public float mouseSensitivity;
     public float jumpForce = 5f;
 
     private Rigidbody rb;
-    private float verticalLookRotation;
-    private float horizontalLookRotation;
 
-    public CinemachineVirtualCamera cinemachineCamera;
+    public Camera camera;
+    public CharacterController characterController;
+    float xRotation = 0f;
+    float speed = 12f;
 
     // Start is called before the first frame update
     void Start()
@@ -35,62 +34,37 @@ public class PlayerController : MonoBehaviour
 
     void LookAround()
     {
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime   ;
 
-        // Rotate the player left and right
+        xRotation -= mouseY;
+        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+        camera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
-        // cinemachineCamera.transform.Rotate(Vector3.up * mouseX);
-
-        // Adjust the POV (pitch) directly through the Cinemachine's POV component
-        CinemachinePOV pov = cinemachineCamera.GetCinemachineComponent<CinemachinePOV>();
-        if (pov != null)
-        {
-            pov.m_HorizontalAxis.Value += mouseX;
-            pov.m_VerticalAxis.Value -= mouseY;
-        }
-
-        // // Rotate the camera up and down
-        // verticalLookRotation -= mouseY;
-        // verticalLookRotation = Mathf.Clamp(verticalLookRotation, -90f, 90f); // Clamp the rotation so you don't rotate too far
-        // Camera.main.transform.localRotation = Quaternion.Euler(verticalLookRotation, 0f, 0f);
-        // horizontalLookRotation -= mouseX;
-        // horizontalLookRotation = Mathf.Clamp(horizontalLookRotation, -90f, 90f); // Clamp the rotation so you don't rotate too far
-        // Camera.main.transform.localRotation = Quaternion.Euler(horizontalLookRotation, 0f, 0f);
     }
 
     void Move()
     {
         // Get movement input
-        float moveX = Input.GetAxis("Horizontal") * moveSpeed;
-        float moveZ = Input.GetAxis("Vertical") * moveSpeed;
+        float moveX = Input.GetAxis("Horizontal");
+        float moveZ = Input.GetAxis("Vertical");
 
-        // Get the forward and right directions relative to the camera
-        Vector3 playerForward = transform.forward;
-        Vector3 playerRight = transform.right;
+        // Get the forward and right direction relative to the camera
+        Vector3 cameraForward = camera.transform.forward;
+        Vector3 cameraRight = camera.transform.right;
+        Debug.Log(cameraForward);
+        // Flatten the forward and right directions to the horizontal plane
+        cameraForward.y = 0f;
+        cameraRight.y = 0f;
 
-        // Calculate the movement direction relative to the player's forward direction
-        Vector3 move = (playerRight * moveX + playerForward * moveZ).normalized;
+        // Normalize the vectors
+        cameraForward.Normalize();
+        cameraRight.Normalize();
 
-        // Apply the movement to the Rigidbody
-        rb.velocity = new Vector3(move.x, rb.velocity.y, move.z);
-
-
-        // Vector3 cameraForward = cinemachineCamera.transform.forward;
-        // Vector3 cameraRight = cinemachineCamera.transform.right;
-
-        // // Project forward and right on the horizontal plane (ignore y)
-        // cameraForward.y = 0f;
-        // cameraRight.y = 0f;
-
-        // cameraForward.Normalize();
-        // cameraRight.Normalize();
-
-        // // Calculate the movement direction relative to the camera's view
-        // Vector3 move = (cameraRight * moveX + cameraForward * moveZ).normalized;
-
-        // // Apply the movement to the Rigidbody
-        // rb.velocity = new Vector3(move.x, rb.velocity.y, move.z);
+        // Calculate the movement direction based on the input and camera direction
+        Vector3 moveDirection = transform.forward  * moveZ + transform.right * moveX; 
+        characterController.Move(moveDirection * speed * Time.deltaTime);
+        
     }
 
     void Jump()
