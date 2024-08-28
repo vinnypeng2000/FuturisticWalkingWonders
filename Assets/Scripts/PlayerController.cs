@@ -1,11 +1,11 @@
 using UnityEngine;
-using Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 5f;
     public float mouseSensitivity;
     public float jumpForce = 5f;
+    public Vector3 velocity;
 
     private Rigidbody rb;
 
@@ -35,7 +35,7 @@ public class PlayerController : MonoBehaviour
     void LookAround()
     {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime   ;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
@@ -52,7 +52,6 @@ public class PlayerController : MonoBehaviour
         // Get the forward and right direction relative to the camera
         Vector3 cameraForward = camera.transform.forward;
         Vector3 cameraRight = camera.transform.right;
-        Debug.Log(cameraForward);
         // Flatten the forward and right directions to the horizontal plane
         cameraForward.y = 0f;
         cameraRight.y = 0f;
@@ -69,9 +68,11 @@ public class PlayerController : MonoBehaviour
 
     void Jump()
     {
-        if (Input.GetButtonDown("Jump") && IsGrounded())
+        if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            velocity.y = 0;
+            velocity.y += jumpForce;
+            characterController.Move(velocity * Time.deltaTime);
         }
     }
 
